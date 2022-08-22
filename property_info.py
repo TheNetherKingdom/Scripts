@@ -1,5 +1,6 @@
+from typing import Sequence, Any
 
-def const_print(a, sep: str = ' '):
+def const_print(a: Sequence[Any], sep: str = ' '):
     cols = zip(*a)
     a = map(lambda x: map(str, x), a)
     get_max = lambda x: max(x, key=len)
