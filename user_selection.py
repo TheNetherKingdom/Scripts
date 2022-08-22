@@ -1,12 +1,13 @@
-from typing import Union, List
+from typing import Union, List, TypeVar, Optional
+T = TypeVar("T")
 
 class HandleOptions:
-  def __init__(self, options: list, start: int = 0, 
+  def __init__(self, options: List[T], start: int = 0, 
                 *, prefix: str = "\t", sep: str = ""):
     self.options: dict = dict(enumerate(options, start=start))
     
-    self.prefix = prefix
-    self.sep = sep
+    self.prefix: str = prefix
+    self.sep: str = sep
   
   
   @staticmethod
@@ -25,7 +26,7 @@ class HandleOptions:
     
     print(msg)
   
-  def pick(self, msg: str = "", default = None):
+  def pick(self, msg: str = "", default = None) -> Optional[T]:
     print('Choose one option -')
     print(self)
     
@@ -33,7 +34,7 @@ class HandleOptions:
     
     return self.options.get(clean_input(msg), default)
   
-  def assert_pick(self, /, *args, **kwargs):
+  def assert_pick(self, /, *args, **kwargs) -> T:
     while (k := self.pick()) is None:
       print("Invalid Input. Enter an option")
     
