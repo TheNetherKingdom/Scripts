@@ -51,11 +51,11 @@ class Board:
 
      # check lower diagonals (\)
      for i in range(len(board[0])): # range(self.x - self.win_length)
-       a = self.get_right(board, i)
+       a = Board.get_right(board, i)
        #yield self.check_rows(a) if len(a) >= self.win_lengt else False
        yield len(a) >= self.win_length and self.check_rows(a)
      
      # check upper diagonals (/)
      for i in range(len(board)):
-       a = self.get_right(board, 0, i)
+       a = Board.get_right(board, 0, i)
        yield len(a) >= self.win_length and self.check_rows(a)
