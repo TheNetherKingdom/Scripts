@@ -30,7 +30,8 @@ class Board:
    def check_cols(self, board) -> bool:
      return self.check_rows( zip(board) )
    
-   def get_right(self, board, x_offset: int = 0, y_offset: int = 0) -> list:
+   @staticmethod 
+   def get_right(board, x_offset: int = 0, y_offset: int = 0) -> list:
      """
      Gets all board diagonals, starting from position (x, y).
      """
