@@ -1,15 +1,15 @@
 from typing import Union, List
 
 class HandleOptions:
-  def __init__(self, options: list, start: int = 0, 
+  def __init__(self, options: list, title: str = "", start: int = 1, 
                 *, prefix: str = "\t", sep: str = ""):
     self.options: dict = dict(enumerate(options, start=start))
-    
+    self.title = title or 'Choose one option -'
     self.prefix = prefix
     self.sep = sep
   
   
-  @staticmethod
+  @staticmethod 
   def show(*args, *, prefix: str = "", **kwargs) -> None:
     print(prefix, *args, **kwargs)
   
@@ -26,7 +26,7 @@ class HandleOptions:
     print(msg)
   
   def pick(self, msg: str = "", default = None):
-    print('Choose one option -')
+    print(self.title)
     print(self)
     
     clean_input = lambda x: get_input(x).strip().lower()
@@ -43,5 +43,5 @@ if __name__ == "__main__":
    options = ['Exam', 'Monthly Test']
    marks = ["Maths", "Sst", "English", "Hindi", "Science"]
 
-   subjects = HandleOptions(options, 1)
+   subjects = HandleOptions(options)
    user = subjects.assert_pick("Enter Answer: ")
