@@ -35,7 +35,7 @@ class HandleOptions:
   
   def assert_pick(self, /, *args, **kwargs):
     while (k := self.pick(*args, **kwargs)) is None:
-      print("Invalid Input. Enter an option")
+      print("Invalid Input. Enter a valid option")
     
     return k
 
