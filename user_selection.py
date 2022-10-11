@@ -54,9 +54,13 @@ class HandleOptions:
   def show(self) -> None:
     print(f"{self.title}\n{self!r}")
 
-  def pick(self, msg: str = "", default = None, *, topic: bool = True):
+  def pick(self, msg: str = "", default = None, *, topic: bool = True, exit_code: int = -1:
     show() if topic else print(self)
-    return self.options.get(get_input(msg), default)
+    k = get_input(msg)
+    if k != exit_code:
+       return self.options.get(g
+K, default)
+    return k  # self.quit()
   
   def assert_pick(self, /, *args, **kwargs):
     print(self.title)
@@ -71,7 +75,7 @@ def main():
   marks = ["Maths", "Sst", "English", "Hindi", "Science"]
 
   subjects = HandleOptions(options)
-  user = subjects.assert_pick("Enter Answer: ")
+  user = subjects.assert_pick("Enter Answer: ", exit_code = 0)
   print(f"\nSelected {user!r}.")
 
   print()
