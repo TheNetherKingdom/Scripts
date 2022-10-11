@@ -58,9 +58,11 @@ class HandleOptions:
     show() if topic else print(self)
     k = get_input(msg)
     if k != exit_code:
-       return self.options.get(g
-K, default)
-    return k  # self.quit()
+       return self.options.get(k, default)
+
+    raise NotImplementedError("Yet to implement '.quit()' method.")
+
+    # return k  # self.quit()
   
   def assert_pick(self, /, *args, **kwargs):
     print(self.title)
