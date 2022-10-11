@@ -26,11 +26,12 @@ def get_marks_alternative(subjects: list) -> list:
 from typing import Union, List
 
 class HandleOptions:
-  def __init__(self, options: list, start: int = 0, 
+  def __init__(self, options: list, title: str = "", start: int = 1, 
                 *, prefix: str = "\t", sep: str = ". "):
     self.options: dict = dict(enumerate(options, start=start))
     
     self.prefix = prefix
+    self.title = title or 'Choose one option -'
     self.sep = sep
   
   """
@@ -38,9 +39,9 @@ class HandleOptions:
   def show(*args, *, prefix: str = "", **kwargs) -> None:
     print(prefix, *args, **kwargs)
   """
-  
+
   def __repr__(self) -> str:
-    string = (self.prefix + self.sep.join(map(str, item)) for item in self.options. items())
+    string = (self.prefix + self.sep.join(map(str, item)) for item in self.options.items())
     return "\n".join(string)
   
   @staticmethod
@@ -50,18 +51,18 @@ class HandleOptions:
     
     print(msg)
   
-  def pick(self, msg: str = "", default = None, *, show: bool = True):
-    if show:
-       print('Choose one option -')
-       print(self)
-    
+  def show(self) -> None:
+    print(f"{self.title}\n{self!r}")
+
+  def pick(self, msg: str = "", default = None, *, topic: bool = True):
+    show() if topic else print(self)
     return self.options.get(get_input(msg), default)
   
   def assert_pick(self, /, *args, **kwargs):
-    k = self.pick()
-    while k is None:
+    print(self.title)
+
+    while (k := self.pick(*args, topic=False, **kwargs)) is None:
       print("Invalid Option. Try again.")
-      k = self.pick(show=False)
     
     return k
 
@@ -69,9 +70,9 @@ def main():
   options = ['Exam', 'Monthly Test']
   marks = ["Maths", "Sst", "English", "Hindi", "Science"]
 
-  subjects = HandleOptions(options, 1)
+  subjects = HandleOptions(options)
   user = subjects.assert_pick("Enter Answer: ")
-  print(f"\nSelected \'{user}\'.")
+  print(f"\nSelected {user!r}.")
 
   print()
   e = get_marks(pad_right(marks))
