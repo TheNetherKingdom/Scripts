@@ -49,7 +49,7 @@ class HandleOptions:
     if isinstance(msg, Exception):
       raise msg
     
-    print(msg)
+    raise NotImplementedError
   
   def show(self) -> None:
     print(f"{self.title}\n{self!r}")
