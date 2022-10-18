@@ -1,86 +1,119 @@
-from typing import Dict, Sequence, Union, List, Tuple, Callable
-from dataclasses import dataclass, field
-from operator import add, sub, mul, truediv, floordiv, lshift, rshift, and_, or_, xor, pow
+from typing import Sequence, Union, List, Tuple, Callable, ClassVar
+from dataclasses import dataclass
 
-Ingredients = Union[Dict[str, int], Sequence[Tuple[str, int]]]
+C = ClassVar['C']
+
 
 def get(d: dict, value: str, default):
     value = value.strip().lower()
-    
+
     if " " in value:
         raise NotImplemented
-    
+
     for k, v in d.items():
         if value in k.split():
             return v
-    
+
     return default
 
 
-def set_funcs(cls, function, data: List[Callable]):
-    name = (i.__name__.strip("_") for i in data)
- 
-    for i, a in zip(name, data):
-        setattr(cls, f"__{i}__", function(a))
-        setattr(cls, f"__r{i}__", function(a))
+def map_operators(data: Union[str, Sequence[str]]) -> List[Tuple[Callable, Callable]]:
+    # from operator import add, sub, mul, truediv, floordiv, lshift, rshift, and_, or_, xor, pow, \
+    #                    iadd, isub, imul, itruediv, ifloordiv, ilshift, irshift, iand, ior, ixor, ipow
 
+    import operator
 
-def map_operators(data: Union[str, Sequence[str]]) -> List[Callable]:
-    d = {"* m mul mult multiply": mul,
-            "/ // d div": floordiv,
-            "+ a add": add,
-            "- s sub minus": sub,
-            ">> > rshift r": rshift,
-            "<< < lshift l": lshift,
-            "** p pow power exp": pow,
-            
-            "& && and": and_,
-            "| || or": or_,
-            "^ x xor": xor
-    }
-    
-    if isinstance(data, str):
+    d = {"* m mul mult multiply": "mul",
+         "/ // d div": "floordiv",
+         "+ a add": "add",
+         "- s sub minus": "sub",
+         ">> > rshift r": "rshift",
+         "<< < lshift l": "lshift",
+         "** p pow power exp": "pow",
+
+         "& && and": "and_",
+         "| || or": "or_",
+         "^ x xor": "xor"
+         }
+
+    if data == "all":
+        data = list(d.values())
+
+    elif isinstance(data, str):
         data = data.split()
-    
-    convert = lambda x: get(d, x, add)
-    return list(map(convert, data))
+
+    get_values = lambda x: get(d, x, "add")
+    func_names = map(get_values, data)
+
+    convert = lambda x: (getattr(operator, x), getattr(operator, f"i{x.strip('_')}"))
+    return list(map(convert, func_names))
 
 
-def class_gen(actions: str):
-    def setter(cls: object):
+def set_funcs(cls, function, data: List[Tuple[Callable, Callable]], *, reverse: bool = True, self: bool = False):
+    name = (i.__name__.strip("_") for i, _ in data)
+    st = lambda *args: hasattr(*args[:2]) or setattr(*args)
+
+    for i, (a, self_a) in zip(name, data):
+        st(cls, f"__{i}__", function(a))
+        reverse and st(cls, f"__r{i}__", function(a))
+        self    and st(cls, f"__i{i}__", function(self_a))
+
+
+def class_gen(actions: str, self_actions: bool = False) -> Callable:
+    def setter(cls: C) -> C:
         callback = cls._act if "_act" in dir(cls) else None
-        
+
         if not callback:
-            raise ArgumentError(" '_act' function is missing")
-            
-        set_funcs(cls, callback, map_operators(actions))
-        
+            raise LookupError(" '_act' function is missing")
+
+        set_funcs(cls, callback, map_operators(actions), self=self_actions)
+
         return cls
+
     return setter
 
 
+@class_gen("+ - / * < >", self_actions=True)
 @dataclass
-@class_gen("+ - * / > < and or")
-class Recipe:
-    req: Ingredients = field(default_factory=dict)
-    result: Ingredients = field(default_factory=dict) # length of 1 for simplicity
-    
-    
-    def _act(op: Callable):
-        
-        def logic_handler(self, other):
+class Point:
+    x: int = 0
+    y: int = 0
+
+    @staticmethod
+    def _act(op: Callable) -> Callable:
+        def i_math(self, other):
+            self.x, self.y = math(self, other)
+            return self
+
+        def math(self, other):
             nonlocal op
-            if not isinstance(other, set):
-                return op( set(self.result), set(other.result) )
-            return op( set(self.result), other)
-        
-        def math_handler(self, other):
-            nonlocal op
-            if isinstance(other, int) and other > 0:
-               op = lambda d: {k: op(v, other) for k, v in d.items()}
-               return Recipe( *map(op, self) )
-            
-            raise NotImplemented(f"{op.__name__} with {type(other)}")     
-         
-        part = [math_handler, logic_handler][op in (or_, and_ xor)]
-        return part
+
+            calc = lambda a, b: tuple(op(i, j) for i, j in zip(a, b))  # doesnt assign to 'self', due to arguments.
+            # v = lambda x: self if op.__name__.startswith("i") else Point(*x)
+
+            if isinstance(other, Point):
+                return calc(self, other)
+
+            if isinstance(other, (int, float)):
+                other = [other] * 2
+
+            elif len(other) < 2:
+                other = [*other, *[0] * (2 - len(other))]
+
+            return calc(self, other)
+
+        return [math, i_math][op.__name__.startswith("i")]
+
+    def __str__(self):
+        return f"({','.join(map(str, self))})"
+
+    def __iter__(self):
+        return iter((self.x, self.y))
+
+    def assign(self, other: Sequence):
+        self.x, self.y, *_ = other
+
+from pprint import pprint
+
+a = Point()
+pprint(dir(a))
