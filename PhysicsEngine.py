@@ -19,22 +19,29 @@ class Scalar:
     x_axis: int = 0
     y_axis: int = 0
     limit: tuple = (0, None)
+    
+    @staticmethod
+    def _apply_lim(n, limit):
+        if not limit:
+            return
+        a, b, *_ = limit
+        a is not None and (n := min(a, n))
+        b is not None and (n := max(b, n)) 
+        return n
 
     def _limit(self):
         if not self.limit:
             return
 
-        x, y = self.x_axis, self.y_axis
-
-        if self.limit[0] is not None:
-            x = max(self.x_axis, self.limit[0])
-            y = max(self.y_axis, self.limit[0])
-
-        if self.limit[1] is not None:
-            x = min(self.limit[1], x)
-            y = min(self.limit[1], y)
-
-        self.x_axis, self.y_axis = x, y
+        limit = zip((max, min), self.limit)
+        
+        for func, lim in limit:
+            if lim is None:
+                continue
+            self.assign( map(func, zip(self, [lim]*2)) )
+        
+    def assign(self, other):
+        self.x_axis, self.y_axis, *_ = other
 
     # arithmatic functions could be compacted;
     # using this for now to allow more flexibility when needed.
