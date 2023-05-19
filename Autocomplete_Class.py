@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Sequence, Union, List, Tuple, Callable, ClassVar
 from dataclasses import dataclass
 
@@ -36,41 +37,45 @@ def map_operators(data: Union[str, Sequence[str]]) -> List[Tuple[Callable, Calla
          "^ x xor": "xor"
          }
 
-    if data == "all":
-        data = list(d.values())
+    convert = lambda x: (getattr(operator, x), getattr(operator, f"i{x.strip('_')}"))
 
-    elif isinstance(data, str):
+    if data == "all":
+        return list(map(convert, d.values()))
+
+    # ---
+
+    if isinstance(data, str):
         data = data.split()
 
-    get_values = lambda x: get(d, x, "add")
-    func_names = map(get_values, data)
-
-    convert = lambda x: (getattr(operator, x), getattr(operator, f"i{x.strip('_')}"))
+    func_names = map(lambda x: get(d, x, "add"), data)
     return list(map(convert, func_names))
 
 
 def set_funcs(cls, function, data: List[Tuple[Callable, Callable]], *, reverse: bool = True, self: bool = False):
-    name = (i.__name__.strip("_") for i, _ in data)
+    name = (i.__name__.strip("_") for i, _ in data)  # gets the function's name, to be allocated later.
     st = lambda *args: hasattr(*args[:2]) or setattr(*args)
 
-    for i, (a, self_a) in zip(name, data):
+    for i, (a, self_a) in zip(name, data):  # (FUNC_NAME, (FUNC, I_FUNC)) <- might want to refactor this (i, a, self_a).
         st(cls, f"__{i}__", function(a))
         reverse and st(cls, f"__r{i}__", function(a))
         self    and st(cls, f"__i{i}__", function(self_a))
 
 
-def class_gen(actions: str, self_actions: bool = False) -> Callable:
+def class_gen(actions: str | Sequence[str], self_actions: bool = False, *, callback_name: str = "_act") -> Callable:
     def setter(cls: C) -> C:
-        callback = cls._act if "_act" in dir(cls) else None
+        callback = getattr(cls, callback_name, None)
 
-        if not callback:
-            raise LookupError(" '_act' function is missing")
+        if callback is None:
+            raise LookupError(f"{callback_name!r} function is missing")
 
+        # generate functions -
         set_funcs(cls, callback, map_operators(actions), self=self_actions)
 
+        # quit -
         return cls
 
     return setter
+
 
 
 @class_gen("+ - / * < >", self_actions=True)
